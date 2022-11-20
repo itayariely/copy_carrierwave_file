@@ -46,7 +46,14 @@ module CopyCarrierwaveFile
     end
 
     def set_file_for_remote_storage
-      resource.send(:"remote_#{mount_point.to_s}_url=", original_resource_mounter.url)
+      extension = original_resource_mounter.file.extension
+      basename = File.basename(original_resource_mounter.path)
+      basename.slice! ".#{extension}"
+      temp_file = Tempfile.new([basename, extension.downcase], binmode: true)
+      temp_file.write(original_resource_mounter.read)
+      resource.send(:"#{mount_point.to_s}=", File.open(temp_file))
+      temp_file.close
+      temp_file.unlink 
     end
 
     def set_file_for_local_storage
